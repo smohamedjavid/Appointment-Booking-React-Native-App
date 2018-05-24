@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text, TouchableOpacity } from 'react-native';
 
-const ButtonN = ({ onPress, children, disabled }) => {
+const logout = ({ onPress, children, disabled }) => {
   const { buttonStyle, textStyle } = styles;
 
   return (
@@ -34,4 +34,4 @@ const styles = {
   }
 };
 
-export { ButtonN };
+export { logout };

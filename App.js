@@ -1,80 +1,46 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- * @flow
- */
-
 import React, { Component } from 'react';
-import {
-  Platform,
-  StyleSheet,
-  Text,
-  View
-} from 'react-native';
-import firebase from 'firebase';
-import { Header, Button } from './src/common';
+import { View } from 'react-native';
+import Ls from 'react-native-local-storage';
 import LoginForm from './src/LoginForm';
+import Availablility from './src/Avail';
+import Alumni from './src/Alumni';
+
 
 type Props = {};
 export default class App extends Component<Props> {
 
-  state = { loggedIn: null };
-
-  componentWillMount(){
-    firebase.initializeApp({
-    apiKey: "AIzaSyCJIZ9tvCNMlLzCxD9srX1ZffF2pn2gMuY",
-    authDomain: "snippt-app.firebaseapp.com",
-    databaseURL: "https://snippt-app.firebaseio.com",
-    projectId: "snippt-app",
-    storageBucket: "snippt-app.appspot.com",
-    messagingSenderId: "119184076697"
-  });
-
-  firebase.auth().onAuthStateChanged((user) => {
-    if(user){
-      this.setState({ loggedIn: true });
-    }
-    else{
-      this.setState({ loggedIn: false });
-    }
-  });
-}
-
-renderContent() {
-  switch(this.state.loggedIn){
-    case true:
-      return <Button style={styles.container} onPress={() => firebase.auth().signOut()}> Log Out</Button>
-    case false:
-      return <LoginForm />
-    default:
-
+  constructor() {
+    super();
+  this.state = { loggedIn: false, role: 'student' };
+  this.handleClick = this.handleClick.bind(this);
+  this.roleClick = this.roleClick.bind(this);
   }
+  handleClick() {
+    this.setState({
+        loggedIn: false,
+        role: ''
+    });  
 }
-
+roleClick(role) {
+  this.setState({
+      loggedIn: true,
+      role: role
+  });
+}
+renderContent() {
+  if (this.state.loggedIn === false) {
+    return <LoginForm roleClick={this.roleClick} />; }
+    if (this.state.loggedIn === true && this.state.role === 'student') {
+      return <Availablility handleClick={this.handleClick} />; }
+      if (this.state.loggedIn === true && this.state.role === 'alumni') {
+        return <Alumni handleClick={this.handleClick} />; }
+  }
   render() {
     return (
       <View>
-       {this.renderContent()}
+      {this.renderContent()}
       </View>
     );
   }
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F5FCFF',
-  },
-  welcome: {
-    fontSize: 20,
-    textAlign: 'center',
-    margin: 10,
-  },
-  instructions: {
-    textAlign: 'center',
-    color: '#333333',
-    marginBottom: 5,
-  },
-});
