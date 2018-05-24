@@ -4,24 +4,24 @@ import { DatePickerDialog } from 'react-native-datepicker-dialog';
 import Ls from 'react-native-local-storage';
 import moment from 'moment';
 import { ButtonN, Card, CardSection, } from './common';
-import App from '../App';
 
 class Avail extends Component {
   constructor(props) {
     super(props);
-  this.state = { minD: null, 
-    maxD: null, 
-    slot: '', 
-    disabled: true, 
+  this.state = { minD: null,
+    maxD: null,
+    slot: '',
+    disabled: true,
     selectedDate: null,
     dateText: '',
-    apDis: false
+    apDis: false,
+    token: ''
     };
   }
 
     onDOBPress = () => {
       let selectedDate = this.state.selectedDate;
-  
+
       if (!selectedDate || selectedDate == null) {
         selectedDate = new Date();
         this.setState({
@@ -34,39 +34,48 @@ class Avail extends Component {
         minDate: new Date()
       });
     }
-  
+
     onDOBDatePicked = (date) => {
       this.setState({
         selectedDate: date,
         dateText: moment(date).format('DD-MMM-YYYY')
       });
-      console.log('https://snippt-javid.herokuapp.com/alumnus/alumni/'+ `${this.state.selectedDate}`);
-      this.check();    
+      this.setState({ apDis: false });
+      this.check();
     }
 
     maxDateCal() {
-      let date = new Date();
-      let last = new Date(date.getTime() + (7 * 24 * 60 * 60 * 1000));
+      Ls.get('jwt').then((data) => {
+        this.setState({
+          token: data
+        });
+        const { token } = this.state;
+        console.log('In Avail.js get: ', token); });
+      const date = new Date();
+      const last = new Date(date.getTime() + (7 * 24 * 60 * 60 * 1000));
       return last;
     }
-
     check() {
 
       const BaseUri = 'https://snippt-javid.herokuapp.com/alumnus/alumni/';
-      const uri = BaseUri.concat(this.state.selectedDate);
+      const date = new Date(this.state.selectedDate).toISOString();
+      const uri = BaseUri.concat(date);
       console.log(uri);
+
+      const { token } = this.state;
+      console.log(token);
 
       fetch(uri, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'x-access-token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7Il9pZCI6IjViMDQ1NWIwMjlmNDUxMDAwNGM3ZmFkNSIsIm5hbWUiOiJTdHVkZW50IE9uZSIsImVtYWlsIjoic3R1ZGVudDFAZ21haWwuY29tIiwicGFzc3dvcmQiOiJpbmNvcnJlY3QiLCJyb2xlIjoic3R1ZGVudCIsIl9fdiI6MH0sImlhdCI6MTUyNzA2MTU0NCwiZXhwIjoxNTI3MTQ3OTQ0fQ.Ia7esDO-k_HDC8c7VxfqCSWTtbBC3q-E3zhK0MSfsy8'
+          'x-access-token': token
         },
         }).then((response) => response.json())
         .then((responseJson) => {
-          if (responseJson !== null) {
+          console.log(responseJson);
+          if (responseJson === null) {
             Alert.alert('Booking slots is not currently available Please choose another date','You cant book on this date until alumni confirms a booking on this date ');
-            this.setState({ apDis: true });
           }
           })
           .catch((error) => {
@@ -76,21 +85,22 @@ class Avail extends Component {
     }
 
     bookBtn() {
-      const { selectedDate, slot } = this.state;
-  
+      const { selectedDate, slot, token } = this.state;
+
       fetch('https://snippt-javid.herokuapp.com/booking/alumni/5b045ad529f4510004c7fad7', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-access-token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7Il9pZCI6IjViMDQ1NWIwMjlmNDUxMDAwNGM3ZmFkNSIsIm5hbWUiOiJTdHVkZW50IE9uZSIsImVtYWlsIjoic3R1ZGVudDFAZ21haWwuY29tIiwicGFzc3dvcmQiOiJpbmNvcnJlY3QiLCJyb2xlIjoic3R1ZGVudCIsIl9fdiI6MH0sImlhdCI6MTUyNzA2MTU0NCwiZXhwIjoxNTI3MTQ3OTQ0fQ.Ia7esDO-k_HDC8c7VxfqCSWTtbBC3q-E3zhK0MSfsy8'
+          'x-access-token': token
         },
         body: JSON.stringify({
           date: selectedDate,
           time_slot: slot
-        }) 
+        })
         }).then((response) => response.json())
-        .then((responseJson) => Alert.alert('Appointment successfully placed', JSON.stringify(responseJson)))
-          .catch((error) => {
+        .then((responseJson) => { Alert.alert('Appointment successfully placed', 'You cant book another slot on this date until alumni confirms the booking');
+        this.setState({ apDis: true });
+      }).catch((error) => {
             Alert.alert('Cannot place appointment');
         })
         .done();
@@ -104,13 +114,10 @@ class Avail extends Component {
       if (this.state.slot === 'C') {
         return '6 pm - 7 pm'; }
     }
-  
 
   render() {
-    const { welcome, container } = styles;
-
     return (
-       <View>        
+       <View>
       <Card>
       <CardSection>
       <Text style={styles.welcome}>
@@ -121,7 +128,7 @@ class Avail extends Component {
         <Text>
         Date:
        </Text>
-       <Text>
+       <Text style={styles.content} >
           {this.state.dateText}
           </Text>
         </CardSection>
@@ -134,7 +141,7 @@ class Avail extends Component {
           <Text>
            Time Slot:
           </Text>
-          <Text>
+          <Text style={styles.content}>
           {this.selectedSlot()}
           </Text>
         </CardSection>
@@ -143,13 +150,13 @@ class Avail extends Component {
               onPress={() => {this.setState({ slot: 'A' }); }}
               title="1 pm - 2 pm"
               color="#007aff"
-              disabled={this.state.apDis}             
+              disabled={this.state.apDis}
             />
             <Button
               onPress={() => {this.setState({ slot: 'B' }); }}
               title="4 pm - 5 pm"
               color="#007aff" 
-              disabled={this.state.apDis}             
+              disabled={this.state.apDis}
             />
             <Button
             onPress={() => {this.setState({ slot: 'C' }); }}
@@ -183,11 +190,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F5FCFF',
+    margin: 20,
   },
   welcome: {
     fontSize: 20,
     textAlign: 'center',
-    margin: 20,
+    justifyContent: 'center',
+    margin: 15,
+    paddingLeft: 130,
+    color: '#333333',
   },
   instructions: {
     textAlign: 'center',

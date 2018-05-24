@@ -11,15 +11,25 @@ export default class App extends Component<Props> {
 
   constructor() {
     super();
-  this.state = { loggedIn: false, role: 'student' };
+  this.state = { loggedIn: false, role: 'student', token: '' };
   this.handleClick = this.handleClick.bind(this);
   this.roleClick = this.roleClick.bind(this);
+  this.setToken = this.setToken.bind(this);
   }
-  handleClick() {
+
+setToken(token) {
+  Ls.get('jwt').then((data) => {
     this.setState({
-        loggedIn: false,
-        role: ''
-    });  
+      token: data
+    });
+    console.log('In App.js get: ', data); });
+}
+handleClick() {
+  this.setState({
+      loggedIn: false,
+      role: '',
+      token: ''
+  });
 }
 roleClick(role) {
   this.setState({
@@ -29,7 +39,7 @@ roleClick(role) {
 }
 renderContent() {
   if (this.state.loggedIn === false) {
-    return <LoginForm roleClick={this.roleClick} />; }
+    return <LoginForm roleClick={this.roleClick} setToken={this.setToken} />; }
     if (this.state.loggedIn === true && this.state.role === 'student') {
       return <Availablility handleClick={this.handleClick} />; }
       if (this.state.loggedIn === true && this.state.role === 'alumni') {
